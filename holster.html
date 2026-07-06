@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ARC Multi-tool Holster — RandomLand Gear</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;background:url('Arc Holster/RandomLand.png') center/cover no-repeat;color:#172033}
+    .wrap{max-width:980px;margin:48px auto;padding:24px;background:rgba(245,247,251,0.92);border-radius:24px;}
+    .back{display:inline-block;margin-bottom:18px;color:#0f172a;text-decoration:none;font-weight:700}
+    .hero{display:flex;gap:24px;align-items:flex-start}
+    .gallery{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+    .gallery img{width:100%;max-width:420px;height:360px;object-fit:contain;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.12);background:#ffffff}
+    .thumbs{display:flex;gap:10px;flex-wrap:wrap}
+    .thumb{width:56px;border:none;background:#e2e8f0;color:#1f2937;border-radius:999px;padding:10px 0;cursor:pointer;font-weight:700}
+    .thumb.active{background:#1f2937;color:white}
+    .thumb:hover{background:#cbd5e1}
+    .hero img{width:360px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.12)}
+    h1{margin:0 0 12px}
+    p{color:#5f6b81;line-height:1.6}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">← Back to RandomLand Gear</a>
+    <div class="hero">
+      <div class="gallery">
+        <img id="mainImage" src="Arc Holster/1.png" alt="ARC multi-tool holster" />
+        <div class="thumbs">
+          <button class="thumb active" data-src="Arc Holster/1.png">1</button>
+          <button class="thumb" data-src="Arc Holster/2.png">2</button>
+          <button class="thumb" data-src="Arc Holster/3.png">3</button>
+          <button class="thumb" data-src="Arc Holster/4.png">4</button>
+          <button class="thumb" data-src="Arc Holster/5.png">5</button>
+          <button class="thumb" data-src="Arc Holster/6.png">6</button>
+          <button class="thumb" data-src="Arc Holster/7.png">7</button>
+        </div>
+      </div>
+      <div>
+        <h1>ARC Multi-tool Holster</h1>
+        <p>Our ARC Multi-tool Holster keeps your multitool secure and ready.</p>
+        <p><strong>Features</strong></p>
+        <ul>
+          <li>Active Retention Design</li>
+          <li>Quick-draw Access</li>
+          <li>Holds ARC Multitool</li>
+          <li>Holds ARC Bit Kit</li>
+          <li>Holds Bit Driver Extension or Ratchet Driver</li>
+          <li>Durable Construction</li>
+          <li>Belt Clip Ready</li>
+          <li>Compact Everyday Carry Design</li>
+          <li>Made in USA</li>
+          <li>Fits 1.5" Belts</li>
+        </ul>
+        <p style="font-size:1.1rem;font-weight:700;margin-top:0.8rem;">Price: $24.99</p>
+
+        <section style="margin-top:32px;padding:24px;background:white;border-radius:16px;box-shadow:0 12px 30px rgba(15,23,42,0.08);">
+          <a href="https://www.paypal.com/ncp/payment/BCZ4H7566TSSN" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 22px;background:#1f2937;color:white;border-radius:999px;text-decoration:none;font-weight:700;">Order Here</a>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script>
+    const mainImage = document.getElementById('mainImage');
+    const thumbs = document.querySelectorAll('.thumb');
+    thumbs.forEach(button => {
+      button.addEventListener('click', () => {
+        mainImage.src = button.dataset.src;
+        thumbs.forEach(t => t.classList.remove('active'));
+        button.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
