@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generator Rentals Admin Login</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+  <main class="login-panel">
+    <h1>Admin Login</h1>
+
+    <form id="login-form">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        required
+        autocomplete="email"
+      >
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        required
+        autocomplete="current-password"
+      >
+
+      <button type="submit">Sign In</button>
+    </form>
+
+    <p id="login-message"></p>
+  </main>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

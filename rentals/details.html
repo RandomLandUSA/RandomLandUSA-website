@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Generator Details | RandomLand USA</title>
+
+  <link rel="stylesheet" href="css/rentals.css">
+</head>
+
+<body>
+  <header class="details-header">
+    <div class="details-header-content">
+      <a class="back-link" href="index.html">
+        ← Back to Generator Rentals
+      </a>
+
+      <p class="details-brand">RandomLand USA</p>
+    </div>
+  </header>
+
+  <main class="details-page">
+    <p id="details-status" class="details-status">
+      Loading generator...
+    </p>
+
+    <article id="generator-details" hidden>
+    <section class="details-layout">
+  <div class="details-image-panel">
+    <div class="details-image-wrap">
+      <div
+  id="details-image-gallery"
+  class="details-image-gallery"
+      ></div>
+    </div>
+  </div>
+
+  <div class="details-right-column">
+    <div class="details-summary">
+      <p
+        id="details-manufacturer"
+        class="details-eyebrow"
+      ></p>
+
+      <h1 id="details-name"></h1>
+
+      <p
+        id="details-description"
+        class="details-description"
+      ></p>
+
+      <div class="details-price-grid">
+        <div class="details-price-box">
+          <span>Daily</span>
+          <strong id="details-daily-rate">Call</strong>
+        </div>
+
+        <div class="details-price-box">
+          <span>Weekend</span>
+          <strong id="details-weekend-rate">Call</strong>
+        </div>
+
+        <div class="details-price-box">
+          <span>Weekly</span>
+          <strong id="details-weekly-rate">Call</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-section details-specifications-card">
+      <h2>Generator Specifications</h2>
+
+      <div
+        id="standard-specifications"
+        class="details-spec-list"
+      ></div>
+    </div>
+  </div>
+</section>
+
+       
+
+
+      <section id="rent" class="rental-request-section">
+  <div class="rental-request-heading">
+    <p class="details-eyebrow">Rental Request</p>
+    <h2>Request This Generator</h2>
+
+    <p>
+      Enter your contact information and preferred rental dates.
+      We’ll contact you to confirm availability and pickup details.
+    </p>
+  </div>
+
+  <form id="rental-request-form" class="rental-request-form">
+    <div class="request-form-grid">
+      <div class="request-field">
+        <label for="customer-name">Full name</label>
+
+        <input
+          id="customer-name"
+          type="text"
+          placeholder="John Smith"
+          required
+        >
+      </div>
+
+      <div class="request-field">
+        <label for="customer-email">Email address</label>
+
+        <input
+          id="customer-email"
+          type="email"
+          placeholder="john@example.com"
+          required
+        >
+      </div>
+
+      <div class="request-field">
+        <label for="customer-phone">Phone number</label>
+
+        <input
+          id="customer-phone"
+          type="tel"
+          placeholder="555-555-5555"
+        >
+      </div>
+
+      <div class="request-field">
+        <label for="requested-rate">Rental option</label>
+
+        <select id="requested-rate" required>
+          <option value="">Select a rental option</option>
+          <option value="Daily">Daily</option>
+          <option value="Weekend">Weekend</option>
+          <option value="Weekly">Weekly</option>
+        </select>
+      </div>
+
+      <div class="request-field">
+        <label for="pickup-date">Pickup date</label>
+
+        <input
+          id="pickup-date"
+          type="date"
+          required
+        >
+      </div>
+
+      <div class="request-field">
+        <label for="return-date">Return date</label>
+
+        <input
+          id="return-date"
+          type="date"
+          required
+        >
+      </div>
+    </div>
+
+    <div class="request-field">
+      <label for="customer-notes">
+        Additional information
+      </label>
+
+      <textarea
+        id="customer-notes"
+        rows="5"
+        placeholder="Tell us about your power needs, pickup preferences, or any questions."
+      ></textarea>
+    </div>
+
+    <p id="rental-request-message" class="rental-request-message"></p>
+
+    <button
+      id="submit-rental-request"
+      class="rent-button"
+      type="submit"
+    >
+      Submit Rental Request
+    </button>
+  </form>
+</section>
+    </article>
+  </main>
+
+  <script type="module" src="js/details.js"></script>
+</body>
+</html>

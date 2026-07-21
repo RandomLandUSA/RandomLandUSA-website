@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>RandomLand USA | Generator Admin</title>
+
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="header-content">
+      <div>
+        <p class="eyebrow">RandomLand USA</p>
+        <h1>Generator Rentals</h1>
+        <p id="status-text" class="header-status">
+          Loading inventory...
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button
+          id="new-generator-button"
+          class="button button-primary"
+          type="button"
+        >
+          + New Generator
+        </button>
+
+        <button
+          id="sign-out-button"
+          class="button button-secondary"
+          type="button"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <section class="statistics-grid" aria-label="Inventory statistics">
+      <article class="stat-card">
+        <span class="stat-label">Available</span>
+        <strong id="available-count" class="stat-number">0</strong>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-label">Reserved</span>
+        <strong id="reserved-count" class="stat-number">0</strong>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-label">Rented</span>
+        <strong id="rented-count" class="stat-number">0</strong>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-label">Maintenance</span>
+        <strong id="maintenance-count" class="stat-number">0</strong>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-label">Total Inventory</span>
+        <strong id="total-count" class="stat-number">0</strong>
+      </article>
+    </section>
+
+    <section class="inventory-panel">
+      <div class="inventory-toolbar">
+        <div>
+          <p class="eyebrow">Rental Inventory</p>
+          <h2>Generators</h2>
+          <p id="visible-count" class="muted-text"></p>
+        </div>
+
+        <div class="toolbar-controls">
+          <div class="field">
+            <label for="search-input">Search</label>
+
+            <input
+              id="search-input"
+              type="search"
+              placeholder="Name, model, location..."
+            >
+          </div>
+
+          <div class="field">
+            <label for="status-filter">Status</label>
+
+            <select id="status-filter">
+              <option value="All">All statuses</option>
+              <option value="Available">Available</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Rented">Rented</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="generator-grid" class="generator-grid"></div>
+
+      <div id="empty-state" class="empty-state" hidden>
+        <h3>No generators found</h3>
+        <p>Try changing your search or status filter.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="generator-modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <section
+      class="modal-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="form-title"
+    >
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">Inventory Editor</p>
+          <h2 id="form-title">Add Generator</h2>
+        </div>
+
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="Close generator form"
+          data-close-modal
+        >
+          
+        </button>
+      </header>
+
+      <form id="generator-form">
+        <input id="generator-id" type="hidden">
+
+        <div class="form-section">
+          <h3>Basic Information</h3>
+
+          <div class="form-grid">
+ <div class="field field-wide">
+    <label for="name">Generator name</label>
+    <input
+        id="name"
+        type="text"
+        placeholder="Predator 3500"
+        required
+    >
+</div>
+
+<div class="field">
+  <label for="asset-tag">Asset tag</label>
+  <input
+    id="asset-tag"
+    type="text"
+    placeholder="G-001"
+  >
+</div>
+
+<div class="field">
+  <label for="serial-number">Serial number</label>
+  <input
+    id="serial-number"
+    type="text"
+    placeholder="Manufacturer serial number"
+  >
+</div>
+
+<div class="field">
+  <label for="kw-rating">Power rating (kW)</label>
+  <input
+    id="kw-rating"
+    type="number"
+    min="0"
+    step="0.1"
+    placeholder="3.5"
+  >
+</div>
+
+
+
+            <div class="field">
+              <label for="manufacturer">Manufacturer</label>
+
+              <input
+                id="manufacturer"
+                type="text"
+                placeholder="Predator"
+              >
+            </div>
+
+            <div class="field">
+              <label for="model">Model</label>
+
+              <input
+                id="model"
+                type="text"
+                placeholder="3500"
+              >
+            </div>
+
+            <div class="field">
+              <label for="fuel-type">Fuel type</label>
+
+              <input
+                id="fuel-type"
+                type="text"
+                placeholder="Gasoline"
+              >
+            </div>
+
+            <div class="field">
+              <label for="hours">Operating hours</label>
+
+              <input
+                id="hours"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="0"
+              >
+            </div>
+
+            <div class="field">
+              <label for="generator-status">Status</label>
+
+              <select id="generator-status">
+                <option value="Available">Available</option>
+                <option value="Reserved">Reserved</option>
+                <option value="Rented">Rented</option>
+                <option value="Maintenance">Maintenance</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="location">Location</label>
+
+              <input
+                id="location"
+                type="text"
+                placeholder="Warehouse A"
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Rental Pricing</h3>
+
+          <div class="form-grid pricing-grid">
+            <div class="field">
+              <label for="daily-rate">Daily Rate</label>
+
+              <div class="money-field">
+                <span>$</span>
+
+                <input
+                  id="daily-rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                >
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="weekend-rate">Weekend Rate</label>
+
+              <div class="money-field">
+                <span>$</span>
+
+                <input
+                  id="weekend-rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                >
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="weekly-rate">Weekly Rate</label>
+
+              <div class="money-field">
+                <span>$</span>
+
+                <input
+                  id="weekly-rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+<div class="form-section">
+  <h3>Generator Specifications</h3>
+
+  <div class="form-grid">
+    <div class="field">
+      <label for="running-watts">Running watts</label>
+      <input
+        id="running-watts"
+        type="number"
+        min="0"
+        step="1"
+        placeholder="3000"
+      >
+      
+    </div>
+
+    <div class="field">
+      <label for="starting-watts">Starting watts</label>
+      <input
+        id="starting-watts"
+        type="number"
+        min="0"
+        step="1"
+        placeholder="3500"
+      >
+    </div>
+
+    <div class="field">
+      <label for="fuel-capacity">Fuel capacity (gallons)</label>
+      <input
+        id="fuel-capacity"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="2.30"
+      >
+    </div>
+
+    <div class="field">
+      <label for="weight-lbs">Weight (lbs)</label>
+      <input
+        id="weight-lbs"
+        type="number"
+        min="0"
+        step="0.1"
+        placeholder="100"
+      >
+    </div>
+  
+    <div class="field field-wide">
+  <label>Custom specifications</label>
+
+  <div id="custom-specs-list"></div>
+
+  <button
+    id="add-custom-spec-button"
+    class="button button-secondary"
+    type="button"
+  >
+    + Add Specification
+  </button>
+</div>
+        <div class="form-section">
+          <h3>Description</h3>
+
+          <div class="field">
+            <label for="description">
+              Features and rental notes
+            </label>
+</div>
+            <textarea
+              id="description"
+              rows="5"
+              placeholder="Quiet inverter generator, electric start, wheel kit..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Generator Photo</h3>
+
+          <div class="photo-section">
+            <div class="field">
+              <label for="generator-image">Choose an image</label>
+
+              <input
+                id="generator-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+              >
+
+              <p class="field-help">
+                JPG, PNG, or WebP. Maximum file size: 10 MB.
+              </p>
+            </div>
+            <div
+               id="image-preview-list"
+               class="image-preview-list"
+            ></div>
+        </div>
+
+        <p id="form-message" class="form-message"></p>
+
+        <footer class="form-actions">
+          <button
+            id="save-button"
+            class="button button-primary"
+            type="submit"
+          >
+            Save Generator
+          </button>
+
+          <button
+            class="button button-secondary"
+            type="button"
+            data-close-modal
+          >
+            Cancel
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+
+ <link rel="stylesheet" href="css/dashboard.css">
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

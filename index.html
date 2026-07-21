@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RandomLand Gear</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      color: #222;
-      background: #f4f4f4;
-    }
+    html,
+body {
+    min-height: 100%;
+}
+   body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #222;
+    background: #f4f4f4;
+}
     .hero {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -48,10 +52,12 @@
       font-weight: bold;
     }
     .content {
-      padding: 40px 32px 64px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+  padding: 40px 32px 64px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  }
     .services {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -151,7 +157,7 @@
           <span>Engraving</span>
         </div>
       </article>
-      <a href="generator-rentals.html" style="text-decoration:none;color:inherit;display:block">
+      <a href="rentals/index.html" style="text-decoration:none;color:inherit;display:block">
       <article class="card">
         <img src="Generator Rentals/3500/3500.png" alt="Generator rental cover photo" />
         <div class="card-content">
