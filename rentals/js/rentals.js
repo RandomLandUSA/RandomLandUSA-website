@@ -130,13 +130,7 @@ function createGeneratorCard(generator) {
     `);
   }
 
-  if (generator.electric_start) {
-    specs.push(`
-      <span>
-        <strong>Electric start</strong>
-      </span>
-    `);
-  }
+  
 
   const specsMarkup =
     specs.length > 0
@@ -150,23 +144,11 @@ function createGeneratorCard(generator) {
   return `
     <article class="generator-card">
       <div class="generator-image-wrap">
-        ${imageMarkup}
-
-        <span
-          class="availability-badge availability-${statusClass}"
-        >
-          ${escapeHtml(status)}
-        </span>
+        ${imageMarkup}      
       </div>
 
       <div class="generator-info">
         <h2>${escapeHtml(generator.name || "Generator")}</h2>
-
-        <p class="generator-subtitle">
-          ${escapeHtml(generator.manufacturer || "")}
-          ${escapeHtml(generator.model || "")}
-        </p>
-
         <div class="price-grid">
           <div class="price-box">
             <span class="price-label">Daily</span>
