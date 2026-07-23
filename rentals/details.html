@@ -130,17 +130,16 @@
           placeholder="555-555-5555"
         >
       </div>
-
       <div class="request-field">
-        <label for="requested-rate">Rental option</label>
+    <label>Rental rate</label>
 
-        <select id="requested-rate" required>
-          <option value="">Select a rental option</option>
-          <option value="Daily">Daily</option>
-          <option value="Weekend">Weekend</option>
-          <option value="Weekly">Weekly</option>
-        </select>
-      </div>
+    <input
+  id="calculated-rate"
+  type="text"
+  value="Calculated automatically"
+  readonly
+>
+</div>
 
       <div class="request-field">
         <label for="pickup-date">Pickup date</label>

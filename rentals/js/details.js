@@ -19,13 +19,27 @@ const elements = {
   standardSpecifications: document.getElementById(
     "standard-specifications"
   ),
-  features: document.getElementById("generator-features"),
-
+  
  
   bottomRequestButton: document.getElementById(
-    "bottom-request-button"
-  ),
-};
+  "bottom-request-button"
+),
+
+rentalForm: document.getElementById("rental-request-form"),
+customerName: document.getElementById("customer-name"),
+customerEmail: document.getElementById("customer-email"),
+customerPhone: document.getElementById("customer-phone"),
+calculatedRate: document.getElementById("calculated-rate"),
+pickupDate: document.getElementById("pickup-date"),
+returnDate: document.getElementById("return-date"),
+customerNotes: document.getElementById("customer-notes"),
+rentalRequestMessage: document.getElementById(
+  "rental-request-message"
+),
+submitRentalRequest: document.getElementById(
+  "submit-rental-request"
+),
+}
 
 let generator = null;
 
@@ -40,7 +54,22 @@ async function initialize() {
     return;
   }
 
-  await loadGenerator(generatorId);
+ await loadGenerator(generatorId);
+
+elements.pickupDate.addEventListener(
+  "change",
+  updateCalculatedRate
+);
+
+elements.returnDate.addEventListener(
+  "change",
+  updateCalculatedRate
+);
+
+elements.rentalForm.addEventListener(
+  "submit",
+  handleRentalRequest
+);
 }
 
 async function loadGenerator(id) {
@@ -59,65 +88,7 @@ async function loadGenerator(id) {
   generator = data;
   renderGenerator();
 }
-function initializeImageGallery(imageUrls) {
-  const activeImage = document.getElementById(
-    "active-gallery-image"
-  );
 
-  const thumbnailButtons = Array.from(
-    document.querySelectorAll("[data-gallery-index]")
-  );
-
-  const previousButton = document.querySelector(
-    ".gallery-arrow-left"
-  );
-
-  const nextButton = document.querySelector(
-    ".gallery-arrow-right"
-  );
-
-  let activeIndex = 0;
-
-  function showImage(index) {
-    if (!imageUrls.length || !activeImage) {
-      return;
-    }
-
-    activeIndex =
-      (index + imageUrls.length) % imageUrls.length;
-
-    activeImage.src = imageUrls[activeIndex];
-    activeImage.alt = `${
-      generator.name || "Generator"
-    } photo ${activeIndex + 1}`;
-
-    thumbnailButtons.forEach((button, buttonIndex) => {
-      button.classList.toggle(
-        "active",
-        buttonIndex === activeIndex
-      );
-    });
-  }
-
-  thumbnailButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      showImage(Number(button.dataset.galleryIndex));
-    });
-  });
-
-  previousButton?.addEventListener("click", () => {
-    showImage(activeIndex - 1);
-  });
-
-  nextButton?.addEventListener("click", () => {
-    showImage(activeIndex + 1);
-  });
-
-  if (imageUrls.length === 1) {
-    previousButton?.setAttribute("hidden", "");
-    nextButton?.setAttribute("hidden", "");
-  }
-}
 function renderGenerator() {
   const status = normalizeStatus(generator.status);
   const statusClass = status.toLowerCase();
@@ -230,14 +201,12 @@ if (allImageUrls.length === 0) {
     formatWholeCurrency(generator.weekly_rate);
 
   renderStandardSpecifications();
-  renderFeatures();
+ 
 
 
 
-  elements.bottomRequestButton.addEventListener(
-    "click",
-    handleRentalRequest
-  );
+ 
+}
 }
 function initializeImageGallery(imageUrls) {
   const activeImage = document.getElementById(
@@ -345,27 +314,8 @@ const filteredSpecifications = specifications.filter(([, value]) => value);
     .join("");
 }
 
-function renderFeatures() {
-  const features = [
-    ["Electric start", Boolean(generator.electric_start)],
-    ["Wheel kit", Boolean(generator.wheel_kit)],
-    ["CO sensor", Boolean(generator.co_sensor)],
-  ];
 
-  elements.features.innerHTML = features
-    .map(
-      ([label, enabled]) => `
-        <div class="details-feature-item">
-          <span class="feature-icon">
-            ${enabled ? "✓" : "—"}
-          </span>
 
-          <span>${escapeHtml(label)}</span>
-        </div>
-      `
-    )
-    .join("");
-}
 
 function renderCustomSpecifications() {
   const customSpecs = Array.isArray(generator.custom_specs)
@@ -397,19 +347,199 @@ function renderCustomSpecifications() {
     )
     .join("");
 }
+function calculateRentalRate(pickupDate, returnDate) {
+  if (!pickupDate || !returnDate) {
+    return "";
+  }
 
-function handleRentalRequest() {
-  alert(
-    `Rental request form for ${
-      generator?.name || "this generator"
-    } is the next feature we'll build.`
-  );
+  const start = new Date(`${pickupDate}T00:00:00`);
+  const end = new Date(`${returnDate}T00:00:00`);
+
+  const dayDifference =
+    Math.round((end - start) / (1000 * 60 * 60 * 24));
+if (dayDifference > 7) {
+  return "Too long";
+}
+  if (dayDifference < 0) {
+    return "";
+  }
+
+  // Seven consecutive rental days
+  if (dayDifference === 7) {
+    return "Weekly";
+  }
+
+  // Saturday pickup and Sunday return
+  if (
+    start.getDay() === 6 &&
+    end.getDay() === 0 &&
+    dayDifference === 1
+  ) {
+    return "Weekend";
+  }
+
+  return "Daily";
 }
 
+function updateCalculatedRate() {
+  const rentalOption = calculateRentalRate(
+    elements.pickupDate.value,
+    elements.returnDate.value
+  );
+if (rentalOption === "Too long") {
+  showRentalMessage(
+    "Rentals are limited to 7 consecutive days per request. If you need the generator longer, let us know in the Additional Information section. Longer rentals are available in one-week increments.",
+    "error"
+  );
+  return;
+}
+  if (rentalOption === "Too long") {
+    elements.calculatedRate.value = "Maximum rental is 7 days";
+
+    showRentalMessage(
+      "Rentals cannot be longer than 7 days. Please choose an earlier return date.",
+      "error"
+    );
+
+    elements.submitRentalRequest.disabled = true;
+    return;
+  }
+
+  elements.calculatedRate.value =
+    rentalOption || "Calculated automatically";
+
+  elements.submitRentalRequest.disabled = false;
+
+  if (
+    elements.rentalRequestMessage.textContent.includes(
+      "Rentals cannot be longer"
+    )
+  ) {
+    showRentalMessage("");
+  }
+}
+
+  async function handleRentalRequest(event) {
+  event.preventDefault();
+
+  if (!generator) {
+    showRentalMessage(
+      "Unable to identify the selected generator.",
+      "error"
+    );
+    return;
+  }
+  const customerName = elements.customerName.value.trim();
+const customerEmail = elements.customerEmail.value.trim();
+const customerPhone = elements.customerPhone.value.trim();
+const rentalOption = calculateRentalRate(
+  elements.pickupDate.value,
+  elements.returnDate.value
+);
+if (rentalOption === "Too long") {
+  showRentalMessage(
+    "Rentals are limited to 7 consecutive days per request. If you need the generator longer, let us know in the Additional Information section. Longer rentals are available in one-week increments.",
+    "error"
+  );
+  return;
+}
+const pickupDate = elements.pickupDate.value;
+const returnDate = elements.returnDate.value;
+const customerNotes =
+  elements.customerNotes?.value.trim() || "";
+  
+
+  if (
+    !customerName ||
+    !customerEmail ||
+    !customerPhone ||
+    !rentalOption ||
+    !pickupDate ||
+    !returnDate
+  ) {
+    showRentalMessage(
+      "Please complete all required fields.",
+      "error"
+    );
+    return;
+  }
+
+  if (returnDate < pickupDate) {
+    showRentalMessage(
+      "The return date cannot be before the pickup date.",
+      "error"
+    );
+    return;
+  }
+
+  elements.submitRentalRequest.disabled = true;
+
+  showRentalMessage(
+    "Submitting your rental request...",
+    "pending"
+  );
+
+  const { error } = await supabase
+    .from("rental_requests")
+    .insert({
+      generator_id: generator.id,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      pickup_date: pickupDate,
+      return_date: returnDate,
+      requested_rate: rentalOption,
+      customer_notes: customerNotes || null,
+      status: "Pending",
+    });
+
+  elements.submitRentalRequest.disabled = false;
+
+  if (error) {
+    console.error("Rental request error:", error);
+
+    showRentalMessage(
+      `Unable to submit your request: ${error.message}`,
+      "error"
+    );
+    return;
+  }
+
+  elements.rentalForm.innerHTML = `
+  <div class="rental-success-screen">
+    <div class="rental-success-icon">✓</div>
+
+    <h2>Rental Request Submitted</h2>
+
+    <p>
+      Your rental request has been submitted.
+      We will contact you to confirm availability.
+    </p>
+
+    <a class="rental-success-link" href="index.html">
+      Back to Generator Rentals
+    </a>
+  </div>
+`;
+}
+function showRentalMessage(message, type = "") {
+    elements.rentalRequestMessage.textContent = message;
+
+    elements.rentalRequestMessage.className =
+        "rental-request-message";
+
+    if (type) {
+        elements.rentalRequestMessage.classList.add(
+            `rental-request-message-${type}`
+        );
+    }
+}
 function showError(message) {
   elements.status.textContent = message;
   elements.article.hidden = true;
 }
+
+
 
 function formatValue(value, suffix) {
   if (value === null || value === undefined || value === "") {
@@ -454,4 +584,3 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-}

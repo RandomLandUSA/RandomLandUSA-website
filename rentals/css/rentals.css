@@ -684,3 +684,50 @@ body{
     height: 60px;
   }
 }
+.rental-success-screen {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  padding: 40px 24px;
+  text-align: center;
+  background: #ffffff;
+  color: #10233f;
+  border-radius: 16px;
+}
+
+.rental-success-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #d9f7e3;
+  color: #16783a;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.rental-success-screen h2 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.rental-success-screen p {
+  max-width: 480px;
+  margin: 0;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+.rental-success-link {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: #173f6d;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+}

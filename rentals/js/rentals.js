@@ -198,8 +198,15 @@ function handleCardClick(event) {
   }
 
   const id = button.dataset.id;
-  const action = button.dataset.action;
 
+console.log("Button:", button);
+console.log("Dataset:", button.dataset);
+console.log("ID:", id);
+  const action = button.dataset.action;
+if (!id) {
+  console.error("Generator ID is missing from the button.");
+  return;
+}
   if (action === "details") {
     window.location.href = `details.html?id=${encodeURIComponent(id)}`;
   }
