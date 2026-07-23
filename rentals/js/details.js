@@ -418,7 +418,50 @@ if (rentalOption === "Too long") {
     showRentalMessage("");
   }
 }
+async function checkAvailability(generatorId, pickupDate, returnDate) {
+    const { data, error } = await supabase
+        .from("rental_requests")
+        .select("pickup_date, return_date")
+        .eq("generator_id", generatorId)
+        .eq("status", "Approved");
 
+    if (error) {
+        throw error;
+    }
+
+    const requestedStart = new Date(`${pickupDate}T00:00:00`);
+    const requestedEnd = new Date(`${returnDate}T00:00:00`);
+
+    for (const booking of data) {
+
+        const bookedStart = new Date(`${booking.pickup_date}T00:00:00`);
+
+        const bookedEnd = new Date(`${booking.return_date}T00:00:00`);
+
+        // One-day turnaround buffer
+        bookedEnd.setDate(bookedEnd.getDate() + 1);
+
+        const overlaps =
+            requestedStart <= bookedEnd &&
+            requestedEnd >= bookedStart;
+
+        if (overlaps) {
+
+            const nextAvailable = new Date(bookedEnd);
+            nextAvailable.setDate(nextAvailable.getDate() + 1);
+
+            return {
+                available: false,
+                nextAvailable:
+                    nextAvailable.toISOString().split("T")[0]
+            };
+        }
+    }
+
+    return {
+        available: true
+    };
+}
   async function handleRentalRequest(event) {
   event.preventDefault();
 
@@ -445,6 +488,35 @@ if (rentalOption === "Too long") {
 }
 const pickupDate = elements.pickupDate.value;
 const returnDate = elements.returnDate.value;
+try {
+
+    const availability = await checkAvailability(
+        generator.id,
+        pickupDate,
+        returnDate
+    );
+
+    if (!availability.available) {
+
+        showRentalMessage(
+            `This generator is unavailable for those dates. The next available pickup date is ${availability.nextAvailable}.`,
+            "error"
+        );
+
+        return;
+    }
+
+} catch (error) {
+
+    console.error(error);
+
+    showRentalMessage(
+        "Unable to verify availability.",
+        "error"
+    );
+
+    return;
+}
 const customerNotes =
   elements.customerNotes?.value.trim() || "";
   

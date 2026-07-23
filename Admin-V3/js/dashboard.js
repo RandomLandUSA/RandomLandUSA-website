@@ -16,7 +16,18 @@ const elements = {
   visibleCount: document.getElementById("visible-count"),
   generatorGrid: document.getElementById("generator-grid"),
   emptyState: document.getElementById("empty-state"),
-
+rentalRequestList: document.getElementById(
+  "rental-request-list"
+),
+  bookingCalendar: document.getElementById("booking-calendar"),
+  calendarMonthLabel: document.getElementById("calendar-month-label"),
+  calendarPrevious: document.getElementById("calendar-previous"),
+  calendarToday: document.getElementById("calendar-today"),
+  calendarNext: document.getElementById("calendar-next"),
+  availabilityModal: document.getElementById("availability-modal"),
+  availabilityTitle: document.getElementById("availability-title"),
+  availabilitySummary: document.getElementById("availability-summary"),
+  availabilityTimeline: document.getElementById("availability-timeline"),
   modal: document.getElementById("generator-modal"),
   form: document.getElementById("generator-form"),
   formTitle: document.getElementById("form-title"),
@@ -52,6 +63,8 @@ let generators = [];
 let selectedImages = [];
 let currentImageUrl = null;
 let currentGeneratorImageUrls = [];
+let rentalRequests = [];
+let calendarMonth = startOfMonth(new Date());
 
 initialize();
 
@@ -69,9 +82,11 @@ async function initialize() {
     return;
   }
 
-  connectEventListeners();
-  await loadGenerators();
-  elements.addCustomSpecButton.addEventListener("click", () => {
+ connectEventListeners();
+
+await loadGenerators();
+
+elements.addCustomSpecButton.addEventListener("click", () => {
   addCustomSpecRow();
 });
 }
@@ -84,9 +99,29 @@ function connectEventListeners() {
   elements.searchInput.addEventListener("input", applyFilters);
   elements.statusFilter.addEventListener("change", applyFilters);
 
-  elements.generatorGrid.addEventListener("click", handleCardAction);
+elements.generatorGrid.addEventListener("click", handleCardAction);
 
-  elements.form.addEventListener("submit", saveGenerator);
+elements.rentalRequestList.addEventListener(
+    "click",
+    handleRentalRequestAction
+);
+
+elements.calendarPrevious.addEventListener("click", () => {
+  calendarMonth = addMonths(calendarMonth, -1);
+  renderBookingCalendar();
+});
+
+elements.calendarToday.addEventListener("click", () => {
+  calendarMonth = startOfMonth(new Date());
+  renderBookingCalendar();
+});
+
+elements.calendarNext.addEventListener("click", () => {
+  calendarMonth = addMonths(calendarMonth, 1);
+  renderBookingCalendar();
+});
+
+elements.form.addEventListener("submit", saveGenerator);
 
  elements.imageInput.addEventListener("change", (event) => {
   selectedImages = Array.from(event.target.files ?? []);
@@ -97,8 +132,23 @@ function connectEventListeners() {
     button.addEventListener("click", closeModal);
   });
 
+  document
+    .querySelectorAll("[data-close-availability]")
+    .forEach((button) => {
+      button.addEventListener("click", closeAvailabilityModal);
+    });
+
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !elements.modal.hidden) {
+    if (event.key !== "Escape") {
+      return;
+    }
+
+    if (!elements.availabilityModal.hidden) {
+      closeAvailabilityModal();
+      return;
+    }
+
+    if (!elements.modal.hidden) {
       closeModal();
     }
   });
@@ -122,7 +172,7 @@ async function loadGenerators() {
 
   updateStatistics();
   applyFilters();
-
+  await loadRentalRequests();
   elements.statusText.textContent =
     `${generators.length} generator${generators.length === 1 ? "" : "s"} in inventory.`;
 }
@@ -356,7 +406,16 @@ const customSpecsMarkup = allSpecs.length
 ${customSpecsMarkup}
 
 
-        <div class="card-actions">
+        <div class="card-actions generator-card-actions">
+          <button
+            class="button button-primary availability-button"
+            type="button"
+            data-action="availability"
+            data-id="${escapeHtml(String(generator.id))}"
+          >
+            Availability
+          </button>
+
           <button
             class="button button-secondary"
             type="button"
@@ -390,6 +449,10 @@ function handleCardAction(event) {
   const id = button.dataset.id;
   const action = button.dataset.action;
 
+  if (action === "availability") {
+    openAvailabilityModal(id);
+  }
+
   if (action === "edit") {
     openEditForm(id);
   }
@@ -397,6 +460,298 @@ function handleCardAction(event) {
   if (action === "delete") {
     deleteGenerator(id);
   }
+}
+
+function openAvailabilityModal(generatorId) {
+  const generator = generators.find(
+    (item) => String(item.id) === String(generatorId)
+  );
+
+  if (!generator) {
+    alert("Generator could not be found.");
+    return;
+  }
+
+  const approvedBookings = rentalRequests
+    .filter(
+      (request) =>
+        String(request.generator_id) === String(generatorId) &&
+        request.status === "Approved" &&
+        request.pickup_date &&
+        request.return_date
+    )
+    .sort(
+      (a, b) =>
+        parseLocalDate(a.pickup_date) -
+        parseLocalDate(b.pickup_date)
+    );
+
+  elements.availabilityTitle.textContent =
+    `${generator.name || "Generator"} Availability`;
+
+  const nextAvailable = calculateNextAvailableDate(approvedBookings);
+  const upcomingCount = approvedBookings.filter(
+    (booking) =>
+      addDays(parseLocalDate(booking.return_date), 1) >=
+      startOfDay(new Date())
+  ).length;
+
+  elements.availabilitySummary.innerHTML = `
+    <article class="availability-summary-card">
+      <span class="stat-label">Next available pickup</span>
+      <strong>${escapeHtml(formatDateObject(nextAvailable))}</strong>
+    </article>
+
+    <article class="availability-summary-card">
+      <span class="stat-label">Approved bookings</span>
+      <strong>${approvedBookings.length}</strong>
+    </article>
+
+    <article class="availability-summary-card">
+      <span class="stat-label">Current / future bookings</span>
+      <strong>${upcomingCount}</strong>
+    </article>
+  `;
+
+  if (approvedBookings.length === 0) {
+    elements.availabilityTimeline.innerHTML = `
+      <div class="availability-empty">
+        <h3>No approved rentals</h3>
+        <p>This generator is currently open for booking.</p>
+      </div>
+    `;
+  } else {
+    elements.availabilityTimeline.innerHTML = approvedBookings
+      .map((booking) => {
+        const rentalStart = parseLocalDate(booking.pickup_date);
+        const rentalEnd = parseLocalDate(booking.return_date);
+        const bufferDay = addDays(rentalEnd, 1);
+        const isPast = bufferDay < startOfDay(new Date());
+
+        return `
+          <article class="availability-booking${isPast ? " availability-booking-past" : ""}">
+            <div class="availability-booking-marker" aria-hidden="true"></div>
+
+            <div class="availability-booking-content">
+              <div class="availability-booking-heading">
+                <div>
+                  <p class="eyebrow">${isPast ? "Past Rental" : "Approved Rental"}</p>
+                  <h3>${escapeHtml(
+                    booking.customer_name || "Customer not entered"
+                  )}</h3>
+                </div>
+
+                <span class="request-status request-status-approved">
+                  Approved
+                </span>
+              </div>
+
+              <div class="availability-date-grid">
+                <div>
+                  <span>Pickup</span>
+                  <strong>${escapeHtml(formatDateObject(rentalStart))}</strong>
+                </div>
+
+                <div>
+                  <span>Return</span>
+                  <strong>${escapeHtml(formatDateObject(rentalEnd))}</strong>
+                </div>
+
+                <div class="availability-buffer-date">
+                  <span>Turnaround buffer</span>
+                  <strong>${escapeHtml(formatDateObject(bufferDay))}</strong>
+                </div>
+
+                <div>
+                  <span>Next legal pickup</span>
+                  <strong>${escapeHtml(
+                    formatDateObject(addDays(bufferDay, 1))
+                  )}</strong>
+                </div>
+              </div>
+
+              ${
+                booking.customer_phone || booking.customer_email
+                  ? `
+                    <p class="availability-contact">
+                      ${escapeHtml(
+                        [booking.customer_phone, booking.customer_email]
+                          .filter(Boolean)
+                          .join(" · ")
+                      )}
+                    </p>
+                  `
+                  : ""
+              }
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  elements.availabilityModal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeAvailabilityModal() {
+  elements.availabilityModal.hidden = true;
+  elements.availabilitySummary.innerHTML = "";
+  elements.availabilityTimeline.innerHTML = "";
+  document.body.classList.remove("modal-open");
+}
+
+function calculateNextAvailableDate(approvedBookings) {
+  let candidate = startOfDay(new Date());
+
+  for (const booking of approvedBookings) {
+    const bookedStart = parseLocalDate(booking.pickup_date);
+    const blockedThrough = addDays(
+      parseLocalDate(booking.return_date),
+      1
+    );
+
+    if (candidate < bookedStart) {
+      break;
+    }
+
+    if (candidate <= blockedThrough) {
+      candidate = addDays(blockedThrough, 1);
+    }
+  }
+
+  return candidate;
+}
+
+function startOfDay(date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+}
+
+function formatDateObject(date) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+async function checkAvailability(
+    generatorId,
+    pickupDate,
+    returnDate,
+    excludeRequestId = null
+) {
+
+    const { data, error } = await supabase
+        .from("rental_requests")
+        .select("*")
+        .eq("generator_id", generatorId)
+        .eq("status", "Approved");
+
+    if (error) {
+        throw error;
+    }
+
+    const requestedStart = new Date(`${pickupDate}T00:00:00`);
+    const requestedEnd = new Date(`${returnDate}T00:00:00`);
+
+    for (const booking of data) {
+
+        if (
+            excludeRequestId &&
+            String(booking.id) === String(excludeRequestId)
+        ) {
+            continue;
+        }
+
+        const bookedStart = new Date(`${booking.pickup_date}T00:00:00`);
+
+        const bookedEnd = new Date(`${booking.return_date}T00:00:00`);
+
+        // One-day turnaround buffer
+        bookedEnd.setDate(bookedEnd.getDate() + 1);
+
+        const overlaps =
+            requestedStart <= bookedEnd &&
+            requestedEnd >= bookedStart;
+
+        if (overlaps) {
+            return false;
+        }
+    }
+
+    return true;
+}
+async function handleRentalRequestAction(event) {
+  const button = event.target.closest("[data-request-action]");
+
+  if (!button) {
+    return;
+  }
+
+  const requestId = button.dataset.requestId;
+  const { data: request, error: requestError } = await supabase
+    .from("rental_requests")
+    .select("*")
+    .eq("id", requestId)
+    .single();
+
+if (requestError) {
+    alert(requestError.message);
+    return;
+}
+  const action = button.dataset.requestAction;
+
+  const newStatus =
+    action === "approve"
+      ? "Approved"
+      : action === "decline"
+        ? "Declined"
+        : null;
+
+  if (!newStatus || !requestId) {
+    return;
+  }
+if (newStatus === "Approved") {
+
+    const available = await checkAvailability(
+        request.generator_id,
+        request.pickup_date,
+        request.return_date,
+        request.id
+    );
+
+    if (!available) {
+
+        alert(
+            "This generator is already booked for those dates (including the one-day turnaround buffer)."
+        );
+
+        return;
+    }
+}
+  button.disabled = true;
+
+  const { error } = await supabase
+    .from("rental_requests")
+    .update({
+      status: newStatus,
+    })
+    .eq("id", requestId);
+
+  if (error) {
+    console.error("Rental request update error:", error);
+    alert(`Unable to update request: ${error.message}`);
+    button.disabled = false;
+    return;
+  }
+
+  await loadRentalRequests();
 }
 function addCustomSpecRow(label = "", value = "") {
   const row = document.createElement("div");
@@ -831,6 +1186,299 @@ function formatCurrency(value) {
     currency: "USD",
     maximumFractionDigits: 2,
   }).format(number);
+}
+async function loadRentalRequests() {
+  const container = elements.rentalRequestList;
+
+  const { data, error } = await supabase
+    .from("rental_requests")
+    .select(`
+      *,
+      generators (
+        name
+      )
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    rentalRequests = [];
+    container.innerHTML =
+      "<p class='muted-text'>Unable to load rental requests.</p>";
+    renderBookingCalendar();
+    return;
+  }
+
+  rentalRequests = data ?? [];
+  renderBookingCalendar();
+
+  if (rentalRequests.length === 0) {
+    container.innerHTML =
+      "<p class='muted-text'>No rental requests yet.</p>";
+    return;
+  }
+
+  container.innerHTML = rentalRequests
+    .map(
+      (request) => `
+        <article class="rental-request-card">
+          <div class="rental-request-heading">
+            <div>
+              <p class="eyebrow">
+                ${escapeHtml(request.requested_rate || "Rental Request")}
+              </p>
+
+              <h3>
+                ${escapeHtml(
+                  request.generators?.name || "Unknown Generator"
+                )}
+              </h3>
+            </div>
+
+            <span class="request-status request-status-${escapeHtml(
+              String(request.status || "Pending").toLowerCase()
+            )}">
+              ${escapeHtml(request.status || "Pending")}
+            </span>
+          </div>
+
+          <div class="rental-request-details">
+            <p>
+              <strong>Customer:</strong>
+              ${escapeHtml(request.customer_name || "Not entered")}
+            </p>
+
+            <p>
+              <strong>Email:</strong>
+              ${escapeHtml(request.customer_email || "Not entered")}
+            </p>
+
+            <p>
+              <strong>Phone:</strong>
+              ${escapeHtml(request.customer_phone || "Not entered")}
+            </p>
+
+            <p>
+              <strong>Pickup:</strong>
+              ${escapeHtml(formatDisplayDate(request.pickup_date))}
+            </p>
+
+            <p>
+              <strong>Return:</strong>
+              ${escapeHtml(formatDisplayDate(request.return_date))}
+            </p>
+          </div>
+
+          ${
+            request.customer_notes
+              ? `
+                <p class="rental-request-notes">
+                  <strong>Notes:</strong>
+                  ${escapeHtml(request.customer_notes)}
+                </p>
+              `
+              : ""
+          }
+
+          ${
+            request.status === "Pending"
+              ? `
+                <div class="rental-request-actions">
+                  <button
+                    class="button button-primary"
+                    type="button"
+                    data-request-action="approve"
+                    data-request-id="${escapeHtml(String(request.id))}"
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    class="button button-danger"
+                    type="button"
+                    data-request-action="decline"
+                    data-request-id="${escapeHtml(String(request.id))}"
+                  >
+                    Decline
+                  </button>
+                </div>
+              `
+              : ""
+          }
+        </article>
+      `
+    )
+    .join("");
+}
+
+function renderBookingCalendar() {
+  if (!elements.bookingCalendar || !elements.calendarMonthLabel) {
+    return;
+  }
+
+  elements.calendarMonthLabel.textContent = new Intl.DateTimeFormat(
+    "en-US",
+    {
+      month: "long",
+      year: "numeric",
+    }
+  ).format(calendarMonth);
+
+  const approvedBookings = rentalRequests.filter(
+    (request) =>
+      request.status === "Approved" &&
+      request.pickup_date &&
+      request.return_date
+  );
+
+  const firstCalendarDay = startOfWeek(calendarMonth);
+  const lastCalendarDay = endOfWeek(endOfMonth(calendarMonth));
+  const todayKey = toDateKey(new Date());
+
+  const weekdayHeadings = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ]
+    .map(
+      (day) => `
+        <div class="calendar-weekday" aria-hidden="true">
+          ${day.slice(0, 3)}
+        </div>
+      `
+    )
+    .join("");
+
+  const dayCells = [];
+  let cursor = new Date(firstCalendarDay);
+
+  while (cursor <= lastCalendarDay) {
+    const dateKey = toDateKey(cursor);
+    const inCurrentMonth =
+      cursor.getMonth() === calendarMonth.getMonth();
+    const isToday = dateKey === todayKey;
+
+    const entries = [];
+
+    approvedBookings.forEach((booking) => {
+      const pickup = parseLocalDate(booking.pickup_date);
+      const rentalReturn = parseLocalDate(booking.return_date);
+      const bufferDay = addDays(rentalReturn, 1);
+
+      if (cursor >= pickup && cursor <= rentalReturn) {
+        entries.push({
+          type: "rental",
+          label: booking.generators?.name || "Generator",
+          title: [
+            booking.generators?.name || "Generator",
+            booking.customer_name || "Customer not entered",
+            `${formatDisplayDate(booking.pickup_date)} – ${formatDisplayDate(
+              booking.return_date
+            )}`,
+          ].join(" | "),
+        });
+      } else if (toDateKey(cursor) === toDateKey(bufferDay)) {
+        entries.push({
+          type: "buffer",
+          label: `${booking.generators?.name || "Generator"} buffer`,
+          title: `${
+            booking.generators?.name || "Generator"
+          } turnaround buffer after ${
+            booking.customer_name || "approved rental"
+          }`,
+        });
+      }
+    });
+
+    const entryMarkup = entries
+      .map(
+        (entry) => `
+          <div
+            class="calendar-entry calendar-entry-${entry.type}"
+            title="${escapeHtml(entry.title)}"
+          >
+            ${escapeHtml(entry.label)}
+          </div>
+        `
+      )
+      .join("");
+
+    dayCells.push(`
+      <div
+        class="calendar-day${inCurrentMonth ? "" : " calendar-day-outside"}${
+          isToday ? " calendar-day-today" : ""
+        }"
+        data-date="${dateKey}"
+      >
+        <div class="calendar-day-number">${cursor.getDate()}</div>
+        <div class="calendar-day-events">
+          ${entryMarkup}
+        </div>
+      </div>
+    `);
+
+    cursor = addDays(cursor, 1);
+  }
+
+  elements.bookingCalendar.innerHTML = `
+    <div class="calendar-grid">
+      ${weekdayHeadings}
+      ${dayCells.join("")}
+    </div>
+  `;
+}
+
+function parseLocalDate(dateString) {
+  return new Date(`${dateString}T00:00:00`);
+}
+
+function startOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function startOfWeek(date) {
+  return addDays(date, -date.getDay());
+}
+
+function endOfWeek(date) {
+  return addDays(date, 6 - date.getDay());
+}
+
+function addDays(date, amount) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
+}
+
+function addMonths(date, amount) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function toDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(dateString) {
+  if (!dateString) {
+    return "Not entered";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(parseLocalDate(dateString));
 }
 
 function escapeHtml(value) {
